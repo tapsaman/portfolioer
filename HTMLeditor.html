@@ -1,0 +1,648 @@
+<!DOCTYPE HTML> 
+<html lang="en"> 
+<head>
+<title>Multifolio (name subject to change)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta http-equiv="Content-Language" content="en-us"> 
+<link href="font-awesome-4.5.0/css/font-awesome.css" rel="stylesheet" type="text/css">
+<link href="reset.css" rel="stylesheet" type="text/css">
+<style>
+
+body {
+	margin: 0px;
+	background-color: #ffffff;
+	font-size:1.2em;
+	height:100%;
+}
+
+.tbl { display: table; }
+.tblhead { display: table-row; font-weight: bold; cursor: pointer }
+.tblrowgroup { display: table-row-group; background-color: #bbd}
+.tblrow { display: table-row; }
+.tblcell { display: table-cell; padding-right: 5px; }
+
+
+.fntawsm { 
+	font-family: FontAwesome;
+}
+
+#rightSidetab {
+	width: 400px;
+	height: 100%;
+	position:absolute;
+	right: 0px;
+	overflow: scroll;
+	display:none;
+	padding: 10px;
+	background-color: #ddf;
+	z-index: 5;
+}
+
+#nodeTreeView {
+	width: 100%;
+	height: 95%;
+	overflow: auto;
+	background-color: #ffd;
+}
+
+#mainNodeList i {
+    text-align: center;
+	width: 25px;
+}
+    
+#mainNodeList ul {
+	margin-left: 40px;
+}
+
+#mainNodeList li {
+	white-space: nowrap; <!--Prevent line break-->
+}
+
+#mainNodeList .maxmin {
+    font-size: 0.7em;
+	cursor: pointer;
+}
+
+#mainNodeList .itemDiv {
+    display: inline;
+	cursor: pointer;
+	overflow: hidden;
+	<!--box-sizing: border-box; --Include border and padding in width-->
+}
+
+._comment {
+	font-family: "Courier New", Courier, monospace
+}
+
+#mainNodeList .itemDiv:hover {
+    color: #fff;
+    background-color: #0066aa;
+}
+
+#mainNodeList .itemDiv.selected {
+    border: 2px dashed #bbf;
+}
+    
+#editorWindow { 
+	position:fixed;
+	overflow: visible;
+	display:none;
+	padding: 10px;
+	background-color: #ddf;
+	z-index: 5;
+}
+
+#editorWindow h2 { 
+	font-size: 1.5em;
+	cursor: move;
+	margin-bottom: 15px;
+}
+
+#ifr {
+	border-top: 5px solid #48f;
+	border-bottom: 5px solid #48f;
+}
+    
+#contextMenu {
+    margin: 0;
+    display: none;
+    position: absolute;
+    z-index: 10;
+    width: 240px;
+    background-color: #fff;
+    border: solid 1px #dfdfdf;
+    box-shadow: 1px 1px 2px #cfcfcf;
+}
+
+#contextMenu.active {
+    display: block;
+}
+
+.context-menu__items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.context-menu__item {
+	display: block;
+	padding: 5px;
+	border-bottom: 1px blue solid;
+}
+
+.context-menu__item:last-child {
+	margin-bottom: 0;
+	border-bottom: none;
+}
+
+.context-menu__item:hover {
+    color: #fff;
+    background-color: #0066aa;
+}
+
+.context-menu__link {
+  display: block;
+  padding: 4px 12px;
+  color: #0066aa;
+  text-decoration: none;
+}
+
+.context-menu__link:hover {
+  color: #fff;
+  background-color: #0066aa;
+}
+	
+</style>
+
+<script src="jquery.min.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="editor.js"></script>
+<script src="editor_window.js"></script>
+<script src="anchorpoints_create.js"></script>
+<script src="anchorpoints_ui.js"></script>
+    
+<script src="contextMenu/jquery.ui.position.js"></script>
+<script src="contextMenu/jquery.contextMenu.js"></script>
+<link  href="contextMenu/jquery.contextMenu.css" rel="stylesheet" type="text/css">
+    
+<script>
+
+Editor.updateNodeTreeView = function()
+{
+	var mainList = document.getElementById("mainNodeList");
+	// Flush main node list
+	while (mainList.firstChild) {
+		mainList.removeChild(mainList.firstChild);
+	}
+	
+	function noTextNodes(n) {
+		return n != "[object Text]";
+	}
+	
+	var c = document.getElementById('ifr')
+			.contentWindow.document.body.childNodes;
+    
+	//c = c.filter(noTextNodes);
+	
+	if (c.length === 0)
+		$(mainList).append("<li>EMPTY</li>");
+	else
+	{
+		function nodeToItem(node)
+		{
+			var item = document.createElement('li');
+			item.innerHTML = "<span><i class='fa'> </i>" /*<i class='fa fa-genderless' aria-hidden='true'>*/ + "</span>";
+			
+			if (node == '[object Comment]')
+				item.innerHTML += '<div class="itemDiv _comment"><i class="fa fa-commenting" aria-hidden="true"></i> ' + node.textContent;
+			else if (node == '[object Text]') {
+				return null;
+			}
+			else {
+				var data = Editor.elemData.get(node);
+				
+				item.innerHTML += '<div class="itemDiv _element">' 
+								+ data.faHTML 
+								+ Editor.getElementTitle(node, data) 
+								+ "</div>";
+				
+                $(item).children(".itemDiv").data("elem",node);
+                
+				var c2 = node.childNodes;//.filter(noTextNodes);
+				
+				if (c2 && c2.length > 0)
+				{
+					var ul2 = document.createElement('ul');
+					
+					for (var iter=0; iter < c2.length; iter++)
+					{
+						var newItem = nodeToItem(c2[iter]);
+						if (newItem) ul2.appendChild( newItem );
+					}
+					
+                    if ($(ul2).children().length > 0)
+                    {
+                        $(item).children('span')
+                            .addClass('maxmin')
+                            .data("parentItem",item)
+                            .html("<i class='fa fa-plus' aria-hidden='true'>");
+                        item.appendChild(ul2);
+                    }
+				}
+			}
+            
+			return item;
+		}
+
+		for (var i=0; i < c.length; i++)
+		{
+			var newItem = nodeToItem(c[i]);		
+			
+			if (newItem) mainList.appendChild( newItem );
+		}
+	}
+	
+}
+	
+	
+var editMode,
+    dragMode;
+
+$(document).ready(function() {
+	
+	editMode = false;
+	dragMode = false;
+	
+	var toolList = document.getElementById('toolboxList');
+    
+    for (var i in Editor.elemData) {
+        if (typeof Editor.elemData[i] !== 'function')
+        {
+            var e = Editor.elemData[i];
+            
+            var item = document.createElement('li');
+            item.innerHTML = e.faHTML + " " + e.name.charAt(0).toUpperCase() + e.name.slice(1);
+            $(item).data('element',Editor.elemData[i])
+            item.onclick = function(e) {
+                $('#ifr').contents().find("body").append( $(this).data('element').create() );
+            };
+            
+            toolList.appendChild(item);
+        }
+    }
+    
+    
+    //$('#imgDragTest').draggable({ helper: 'clone' });
+    
+	$('#imgDragTest').draggable({ helper: 'clone', appendTo: '#ifr' });
+	
+	EditorWindow.setHandlers();
+	
+	
+	$("#mainNodeList").on('click','.maxmin',function(e)
+	{
+		e.stopPropagation();
+		$( $(this).data("parentItem") ).children("ul").toggle();
+	});
+    
+    $("#mainNodeList").on('click','.itemDiv._element',function(e)
+	{
+		e.stopPropagation();
+        
+        $("#mainNodeList .selected").removeClass("selected");
+        $(this).addClass("selected");
+        
+        console.log( $(this).data("elem") );
+        
+		edit( $(this).data("elem") );
+	});
+	
+    $('#ifr').load(function() 
+    {
+        $(this).contents().find("html *").on("contextmenu", function(e) 
+        {
+            e.preventDefault();
+            e.stopPropagation();
+
+            //var s = "touched:\n   ";
+            //var rect = document.getElementById('ifr').getBoundingClientRect(),
+            var mouseOn = [],
+                mouseOnVisib = [],
+                iframe = document.getElementById('ifr'),
+				x = e.clientX, 
+                y = e.clientY,
+                ele = iframe.contentWindow.document.elementFromPoint(x,y);
+            
+            while(ele && /*ele.tagName.toLowerCase() != "body" &&*/ ele.tagName.toLowerCase() != "html"){
+                mouseOn.push(ele);
+                mouseOnVisib.push(ele.style.visibility);
+                ele.style.visibility = "hidden";
+                ele = iframe.contentWindow.document.elementFromPoint(x,y);
+            }
+
+            for(var i = 0; i < mouseOn.length; i++){
+                mouseOn[i].style.visibility = mouseOnVisib[i];
+                //s += Editor.getElementTitle(mouseOn[i]) + "\n   ";
+            }
+			
+			Editor.callContextMenu(e.clientX + iframe.offsetLeft,e.clientY + iframe.offsetTop,mouseOn);
+        });
+    });
+    
+    $('#ifrUrlInput').attr('value','nakki/index.html');
+	
+	updateIfrUrl();
+    
+    /*
+    $('#ifr').load(function() 
+    {
+        
+        $('#ifr').on( "contextmenu", function(e) {
+            
+            e.preventDefault();
+            
+            var x = e.pageX,
+                y = e.pageY,
+                target = this.contentWindow.document.elementFromPoint(x,y);
+            
+            alert(Editor.getElementTitle(target));
+        
+        
+        
+        $(this).contents().find("html *").on( "contextmenu", function(e) 
+        {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var s = "touched:\n   ";
+            var x = e.pageX, y = e.pageY;
+            var mouseOn = [],
+                mouseOnVisib = [];
+            
+            var iframe = document.getElementById('ifr');
+            
+            var ele = iframe.contentWindow.document.elementFromPoint(x,y);
+            
+            while(ele && ele.tagName.toLowerCase() != "body" && ele.tagName.toLowerCase() != "html"){
+                mouseOn.push(ele);
+                mouseOnVisib.push(ele.style.visibility);
+                ele.style.visibility = "hidden";
+                ele = iframe.contentWindow.document.elementFromPoint(x,y);
+            }
+
+            for(var i = 0; i < mouseOn.length; i++){
+                mouseOn[i].style.visibility = mouseOnVisib[i];
+                s += Editor.getElementTitle(mouseOn[i]) + "\n   ";
+            }
+            
+            //alert(s);
+            
+            Editor.callContextMenu(e.clientX,e.clientY,mouseOn);
+            
+        });
+    });*/
+    
+});
+    
+    
+// https://www.sitepoint.com/building-custom-right-click-context-menu-javascript/
+Editor.callContextMenu = function(x,y,elemList) {
+
+    var cm = document.getElementById('contextMenu'),
+		cmList = document.getElementById('contextMenuList');
+    
+    // Flush context menu items
+	while (cmList.firstChild) {
+		cmList.removeChild(cmList.firstChild);
+	}
+    
+    if (elemList.length === 0) {
+        $(cm).removeClass('active');
+        return;
+    }
+    else
+        $(cm).addClass('active');
+    
+	for (var i=0; i < elemList.length; i++)
+	{
+		var li = document.createElement("li");
+		li.innerHTML = 'Edit ' + Editor.getElementTitle(elemList[i]);
+        
+		$(li)
+            .addClass('context-menu__item')
+            .data('elem',elemList[i])
+            .click(function() { $(cm).removeClass('active'); edit( $(this).data('elem') ); });
+		
+		cmList.appendChild(li);
+	}
+	
+    cm.style.left = x + "px";
+    cm.style.top = 10 + y + "px";
+
+}
+
+function toggleEdit( optionalInput ) {
+
+	if (optionalInput !== undefined)
+		editMode = optionalInput;
+	else
+		editMode = !editMode;
+
+	if (editMode) {
+	
+		toggleDrag( false );
+		
+		// Add click-->edit -functions to everything inside iframe
+		$("#ifr").contents().find("body *").each( function() 
+        {
+            if (!$(this).hasClass('context_menu'))
+                $(this).addClass('context_menu');
+                
+            $(this).click(function(e)                                    
+            {
+                e.stopPropagation();
+                edit( this );
+            });
+        });
+		$("#editBtn").attr("value", "Quit editing");
+	}
+	else {
+		document.getElementById("editBtn").value = "Edit elements";
+		document.getElementById("editorWindow").style.display = "none";
+		// Remove click functions
+		$("#ifr").contents().find("body *").off('click');
+		
+        $("#ifr").contents().find(".editorselection")
+            .css("outline",Editor.outlineSaveForSelection)
+            .removeClass("editorselection");
+        
+		$("#editBtn").attr("value", "Edit elements");
+	}
+}
+    
+function toggleDrag( optionalInput ) {
+	
+	if (optionalInput !== undefined)
+		dragMode = optionalInput;
+	else
+		dragMode = !dragMode;
+	
+	if (dragMode) {
+		
+		toggleEdit( false );
+		
+		// Add drag to every absolute-positioned element 
+		// inside the body of iframe page
+		$("#ifr").contents().find("body *").each( function() {
+			//if ($(this).hasClass("anchorpoint"))
+			//	alert("ap found");
+			
+			if ($(this).css("position") == "absolute" || $(this).css("position") == "fixed") {
+				$(this).draggable({ containment: "body", scroll: false });
+			}
+            else
+                $(this).sortable({ revert: true, helper: 'clone' });
+		});
+		
+		$("#dragBtn").attr("value", "Quit dragging");
+	}
+	else {
+		// Remove dragging
+		$("#ifr").contents().find("body *").each( function() {
+			if ($(this).data("ui-draggable"))
+				$(this).draggable('destroy');
+            
+            if ($(this).data("ui-sortable"))
+				$(this).sortable('destroy');
+            
+            
+		});
+		
+		$("#dragBtn").attr("value", "Drag elements");
+	}
+}
+
+function addAnchor() 
+{
+	toggleEdit(true);
+
+	var id = 0;
+    while ( $("#ifr").contents().find("#anchorpoint" + id).length !== 0 )
+        id++;
+    
+    var anchorObj = AnchorPoints.getNew( id );
+    
+	$("#ifr").contents().find("body").append( 
+		anchorObj['canvas'], "\n", 
+		anchorObj['tooltip'], "\n\n" );
+	
+	$( anchorObj['canvas'] ).ready(function() {
+		edit( this );
+	});
+}
+
+// Show editor window
+function edit(elem) {
+    
+	$("#ifr").contents().find(".editorselection")
+        .css("outline",Editor.outlineSaveForSelection)
+        .removeClass("editorselection");
+	
+    Editor.outlineSaveForSelection = elem.style.outline;
+    
+    $(elem).css("outline","#55f dashed 2px")
+           .addClass("editorselection");
+    
+    EditorWindow.settings.Element = elem;
+    //EditorWindow.update(elem);
+    
+	var ew = document.getElementById("editorWindow"),
+		head = $('<h2 id="head">Edit '+ Editor.getElementTitle(elem) +'</h2>');
+		
+	ew.innerHTML = "";
+	ew.style.display = "inline";
+	$(ew).append(head);
+	
+	var tbl = $("<div class='tbl'></div>").appendTo(ew);
+
+	function setGroup(groupName) {
+	
+		tbl.append(EditorWindow.createPropTableHeader(groupName));
+		tbl.append(EditorWindow.createPropTableGroup(elem, groupName));
+		
+		if (EditorWindow.settings[groupName+'_open'])
+			tbl.children().last().css('visibility','visible');
+		else
+			tbl.children().last().css('visibility','collapse');
+	}
+	
+	setGroup('General');
+	setGroup('Position');
+	setGroup('Text');
+    
+    // Scroll to edit element
+    $("#ifr").contents().find('html, body').animate({
+        scrollTop: $(elem).offset().top
+    }, 500);
+    
+    console.log(document.getElementById('ifr').contentWindow)
+    
+}
+
+function updateIfrUrl() {
+
+	toggleEdit(false);
+	toggleDrag(false);
+	
+	var new_url = document.getElementById('ifrUrlInput').value;
+	
+	$('#ifr').attr('src',new_url);
+	
+	$('#ifrUrlInput').attr('value',new_url);
+}
+
+</script>
+</head> 
+ 
+<body style="height:100%">
+
+    <div id="contextMenu">
+        <ul id="contextMenuList" class="context-menu__items">
+          <li class="context-menu__item">
+            <a href="#" class="context-menu__link" data-action="View"><i class="fa fa-eye"></i> View</a>
+          </li>
+          <li class="context-menu__item">
+            <a href="#" class="context-menu__link" data-action="Edit"><i class="fa fa-edit"></i> Edit Task</a>
+          </li>
+          <li class="context-menu__item">
+            <a href="#" class="context-menu__link" data-action="Delete"><i class="fa fa-times"></i> Delete Task</a>
+          </li>
+        </ul>
+    </div>
+    
+    <div id="editorTab" style="width:100%; height:100px">  
+
+        <input type="button" id="editBtn" value="Edit elements" onclick="toggleEdit()">
+        <input type="button" id="dragBtn" value="Drag elements" onclick="toggleDrag()">
+        <input type="button" value="Show new HTML" onclick="$('#output').html( '<xmp>' + $('#ifr').contents().find('html').html() + '</xmp>' )">
+		<input type="button" id="addAnchorBtn" value="Add tooltip anchor" onclick="addAnchor()">
+		<img id="imgDragTest" src="point.png">
+		<input type="button" value="Show/hide side bar" onclick=" $('#rightSidetab').toggle() ">
+        <br>
+		<input type="input" id="ifrUrlInput" value="">
+		<input type="button" value="APPLY" onclick="updateIfrUrl( $('#ifrUrlInput').attr('value') )">
+		<br>
+       
+        
+        
+    </div>
+
+    <div id="leftSidetab">
+		<div id="toolbox">
+		
+			<ul id="toolboxList"><ul>
+		
+		</div>
+	</div>
+    
+    <div id="editorWindow">
+
+    </div>
+    
+	<div id="rightSidetab">
+		<input type="button" value="Update" onclick=" Editor.updateNodeTreeView() ">
+		<div id="nodeTreeView">
+		
+			<ul id="mainNodeList"><ul>
+		
+		</div>
+	</div>
+
+    <iframe id="ifr" width="100%" height="800"></iframe>
+
+    <div id="footer" style="height:40px; width:100%; bottom:0;"></div>
+	
+    <div id="output"></div>
+
+</body> 
+</html> 

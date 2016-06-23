@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html lang="en"> 
+<head>
+<title>testdummy</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta http-equiv="Content-Language" content="en-us"> 
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .anchorpoint {
+        position: absolute;
+        z-index: 2;
+        <!--background-color: #ff3;-->
+    }
+    .tooltip {
+        position:absolute;
+        overflow: auto;
+        display: none;
+        background-color: #444;
+        color: #fff;
+        padding: 10px;
+        z-index: 3;
+    }
+</style>
+
+<script src="jquery.min.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="anchorpoints_draw.js"></script>
+<script src="anchorpoints_ui.js"></script>
+
+<script>
+
+$(document).ready(function() {
+
+	AnchorPoints.renewHandlers( document.body );
+
+    animate();
+});
+    
+</script>
+
+</head>
+
+<html style='height:100%;'>
+<body style='height:100%; background-color:#fdf; margin:0;'>
+
+<!-- This is a comment -->
+
+<div id='wrap' style='margin: 0 auto; position:relative; width:600px; height:100%; background-color:#fff; padding:15px'>
+
+<h1 style="outline: 5px dotted #F44" id="hEaDeR">Header</h1>
+
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut ac suscipit elit, eget accumsan est. Quisque sit amet turpis lacus. Nulla ac arcu sed magna congue tristique id sed mauris. Integer iaculis orci a enim euismod mollis. Pellentesque at est in sapien eleifend sagittis ac vel nulla. Praesent faucibus lacinia turpis eget blandit. Donec eu malesuada nisi, ac laoreet justo. Nullam eu maximus dui, vel mollis ex. Mauris magna purus, rhoncus quis elementum a, efficitur et arcu. </p>
+
+<canvas class="anchorpoint" id="anchorpoint0" width="42" height="42" style="left:40px; top:100px; color:rgb(100,200,240)" data-anchortype=1 data-animation=0></canvas>
+<div    class="tooltip" id="tooltip_anchorpoint0">
+	<iframe width="420" height="315" src="http://www.youtube.com/embed/XGSy3_Czz8k"></iframe>
+	<p>asdasd</p>
+</div>
+
+<!--<div style="bottom:0; height: 30px">FOOTER</div>-->
+
+</div>
+
+</body>
+</html>
