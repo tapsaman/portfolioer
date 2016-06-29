@@ -26,12 +26,24 @@ body {
 	font-family: FontAwesome;
 }
 
+#leftSidetab {
+	width: 200px;
+	height: 100%;
+	position:absolute;
+	left: 0px;
+	overflow: auto;
+	display:none;
+	padding: 10px;
+	background-color: #e0e0e0;
+	z-index: 5;
+}
+    
 #rightSidetab {
 	width: 400px;
 	height: 100%;
 	position:absolute;
 	right: 0px;
-	overflow: scroll;
+	overflow: auto;
 	display:none;
 	padding: 10px;
 	background-color: #ddf;
@@ -71,7 +83,8 @@ body {
 }
 
 ._comment {
-	font-family: "Courier New", Courier, monospace
+	font-style: italic;
+	<!--font-family: "Courier New", Courier, monospace-->
 }
 
 #mainNodeList .itemDiv:hover {
@@ -156,6 +169,8 @@ body {
 
 <script src="jquery.min.js"></script>
 <script src="jquery-ui.min.js"></script>
+
+<script src="elemLib.js"></script>
 <script src="editor.js"></script>
 <script src="editor_window.js"></script>
 <script src="anchorpoints_create.js"></script>
@@ -191,7 +206,7 @@ Editor.updateNodeTreeView = function()
 		function nodeToItem(node)
 		{
 			var item = document.createElement('li');
-			item.innerHTML = "<span><i class='fa'> </i>" /*<i class='fa fa-genderless' aria-hidden='true'>*/ + "</span>";
+			item.innerHTML = "<span><i class='fa'> </i> </span>";
 			
 			if (node == '[object Comment]')
 				item.innerHTML += '<div class="itemDiv _comment"><i class="fa fa-commenting" aria-hidden="true"></i> ' + node.textContent;
@@ -199,7 +214,7 @@ Editor.updateNodeTreeView = function()
 				return null;
 			}
 			else {
-				var data = Editor.elemData.get(node);
+				var data = ElemLib.get(node);
 				
 				item.innerHTML += '<div class="itemDiv _element">' 
 								+ data.faHTML 
@@ -255,19 +270,34 @@ $(document).ready(function() {
 	
 	var toolList = document.getElementById('toolboxList');
     
-    for (var i in Editor.elemData) {
-        if (typeof Editor.elemData[i] !== 'function')
-        {
-            var e = Editor.elemData[i];
+	//function createToolBoxList
+	
+    for (var i in ElemLib.categ) {
+        
+        console.log("tb_" + i + "__" + ElemLib.categ[i]);
+        
+        for (var ii = 0; ii < ElemLib.categ[i].length; ii++) {
+        
+            console.log("item_" + ii);
+            
+            var elemData = ElemLib.categ[i][ii];
             
             var item = document.createElement('li');
-            item.innerHTML = e.faHTML + " " + e.name.charAt(0).toUpperCase() + e.name.slice(1);
-            $(item).data('element',Editor.elemData[i])
+            
+            item.innerHTML = elemData.faHTML + " " + elemData.name.charAt(0).toUpperCase() + elemData.name.slice(1);
+            
+            $(item).data('element',elemData)
+            
             item.onclick = function(e) {
-                $('#ifr').contents().find("body").append( $(this).data('element').create() );
+				
+				var targetContainer = $('#ifr').contents().find(".editorselection")[0];
+				if (!targetContainer)
+					targetContainer = $('#ifr').contents().find("body");
+				$(this).data('element').addTo( targetContainer );
             };
             
             toolList.appendChild(item);
+        
         }
     }
     
@@ -277,7 +307,6 @@ $(document).ready(function() {
 	$('#imgDragTest').draggable({ helper: 'clone', appendTo: '#ifr' });
 	
 	EditorWindow.setHandlers();
-	
 	
 	$("#mainNodeList").on('click','.maxmin',function(e)
 	{
@@ -600,33 +629,33 @@ function updateIfrUrl() {
         </ul>
     </div>
     
-    <div id="editorTab" style="width:100%; height:100px">  
+    <div id="editorTab" style="position: relative; width:100%; height:100px">  
 
         <input type="button" id="editBtn" value="Edit elements" onclick="toggleEdit()">
         <input type="button" id="dragBtn" value="Drag elements" onclick="toggleDrag()">
         <input type="button" value="Show new HTML" onclick="$('#output').html( '<xmp>' + $('#ifr').contents().find('html').html() + '</xmp>' )">
 		<input type="button" id="addAnchorBtn" value="Add tooltip anchor" onclick="addAnchor()">
-		<img id="imgDragTest" src="point.png">
-		<input type="button" value="Show/hide side bar" onclick=" $('#rightSidetab').toggle() ">
+		<!--<img id="imgDragTest" src="point.png">-->
         <br>
 		<input type="input" id="ifrUrlInput" value="">
 		<input type="button" value="APPLY" onclick="updateIfrUrl( $('#ifrUrlInput').attr('value') )">
 		<br>
-       
-        
+        <input type="button" value="Toggle left sidebar" onclick=" $('#leftSidetab').toggle() ">
+		<input type="button" value="Toggle right sidebar" style="position:absolute; right:0px" onclick=" $('#rightSidetab').toggle() ">
         
     </div>
 
     <div id="leftSidetab">
 		<div id="toolbox">
-		
+            <h3>Add...</h3>
 			<ul id="toolboxList"><ul>
 		
 		</div>
 	</div>
     
     <div id="editorWindow">
-
+		<h2 id="edwiHead"></h2>
+		<p id="edwiInfo"></p>
     </div>
     
 	<div id="rightSidetab">

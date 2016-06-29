@@ -1,80 +1,45 @@
 var Editor = {};
-Editor.selectionOutline = "";
+Editor.selection = null;
+Editor.selectionOutline = "#55f dashed 2px";
 Editor.outlineSaveForSelection = "";
 
-Editor.newData = function(tag,name,faClass,faUnicode,creator,doNotIncludde { from = 0, to = this.length } = {}) {)
+Editor.setSelection = function(elem)
 {
-    this.tag = tag;
-	this.name = (name ? name : tag);
-	
-	var fac = (faClass ? faClass : 'fa-asterisk');
-	this.faHTML = '<i class="fa ' + fac + '" aria-hidden="true"></i>';
-	
-	this.faUnicode = (faUnicode ? faUnicode : '\f060');
-    
-    this.create = (creator ? creator : function() {
-        return document.createElement(tag);
-    });
-};
-
-// HTML element library
-Editor.elemData = {
-	
-	// REGULAR TAG ELEMENTS
-	body: 
-        new Editor.newData('body'),
-	p: 
-        new Editor.newData('p','paragraph','fa-paragraph','\f1dd'),
-	div: 
-        new Editor.newData('div','container','fa-square-o','\f096'),
-	canvas: 
-        new Editor.newData('canvas','canvas','fa-pencil-square-o','\f044'),
-	
-	// CUSTOM ELEMENTS DEFINED BY THEIR CLASS
-	anchorpoint: 
-        new Editor.newData('canvas','anchorpoint','fa-dot-circle-o','\f192',
-        function() {
-        
-        }),
-
-	// Fetch data for HTML element
-	get: function(elem) {
+	// For previous selection: restore outline and remove class
+	$("#ifr").contents().find(".editorselection")
+        .css("outline",Editor.outlineSaveForSelection)
+        .removeClass("editorselection");
 		
-		if (elem.classList)
-			var c = elem.classList;
-		else // For IE9 and older
-		{
-			alert('shit');
-			var c = [];
-		}
-		
-		for (var i=0; i<c.length; i++) {
-			if (Editor.elemData[c[i]] !== undefined)
-				return Editor.elemData[c[i]];
-		}
-		
-		var tag = elem.tagName.toLowerCase();
-		
-		if (Editor.elemData[tag]) {
-			return Editor.elemData[tag];
-		}
-		else
-			return new Editor.newData(tag);	
+	$("#mainNodeList .itemDiv.selected")
+		.removeClass("selected");
+	
+	if (!elem.tagName) {
+		// elem is not a DOMElement
+		Editor.selection = null;
+		EditorWindow.update();
+		return false;
 	}
-};
-
-Object.freeze(Editor.elemData);
+	else {
+		Editor.selection = elem;
+		Editor.outlineSaveForSelection = elem.style.outline;
+		elem.style.outline = Editor.selectionOutline;
+		elem.class += " selected";
+		
+		EditorWindow.update();
+		return true;
+	}
+}
 
 Editor.getElementTitle = function(elem, elemData) {
 
 	var title = "";
 
     if (elem.id !== "") 
-        title = '"' + elem.id + '"';
+        title = '"' + elem.id + '" ';
 	else 
 	{
 		if (elemData === undefined)
-			elemData = Editor.elemData.get(elem);
+			elemData = ElemLib.get(elem);
         
         title = '&lt;' + elemData.name + '&gt;';
     }

@@ -1,4 +1,59 @@
 var EditorWindow = {};
+EditorWindow.selectionData = null;
+
+
+EditorWindow.update = function(elem)
+{
+	var e = Editor.selection;
+		eData = EditorWindow.selectionData;
+		
+	if (!e) {
+		document.getElementById("edwiHead").innerHTML = "No element selected";
+		document.getElementById("edwiInfo").innerHTML = "";
+		return false;
+	}
+	if (!eData)
+		EditorWindow.selectionData = eData = ElemLib.get(elem);
+	
+	document.getElementById("edwiHead").innerHTML = 
+		"Edit " + Editor.getElementTitle(e, eData);
+	document.getElementById("edwiInfo").innerHTML = 
+		eData.faHTML + (e.id !== "" ? "<" + e.Data.name + ">" : "");
+	
+	$('#editorWindow .tblhead').each(function() {
+		
+		var propGroup = $(this).attr('data-headOf');
+		
+		if (eData.propGroups[propGroup]) 
+		{
+			$(this).css('visibility','');
+			
+			var open = EditorWindow.settings[ propGroup + '_open' ];
+				
+			if (open) {
+				$(this).next().css('visibility','');
+				
+				$(this).children('.input').each(function()
+				{
+					this.value = (elem.style[propName] !== "" ? elem.style[propName] : $(elem).css(prop));
+				});
+			}
+			else
+				$(this).next().css('visibility','collapse');
+			
+			$(this).children().last()
+				.html("<i class='fa fa-chevron-"+(open ? "down" : "up")+"' aria-hidden='true'></i>");
+		}
+	});
+	
+	return true;
+}
+
+EditorWindow.settings = {
+	General_open: false,
+	Position_open: false,
+	Text_open: false
+}
 
 EditorWindow.setHandlers = function()
 {
@@ -54,15 +109,6 @@ EditorWindow.setHandlers = function()
             Editor.validateCSSinput(elem, prop, this);
         
 	});
-}
-
-EditorWindow.settings = {
-    // Editing element
-    Element: null,
-    
-	General_open: false,
-	Position_open: false,
-	Text_open: false
 }
 
 EditorWindow.apply = function(elem)
@@ -135,7 +181,7 @@ EditorWindow.createPropTableGroup = function(elem, groupName)
 			$(input)
 				.attr('type','text')
 				.attr('value', (prop.elementAttr ? elem[propName] : elem.style[propName]))
-				.attr('placeholder', prop.defValue);
+				.attr('placeholder', $(elem).css(propName));//prop.defValue);
 		}
 		
 		if (input) {
