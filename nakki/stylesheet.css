@@ -1,0 +1,64 @@
+/* CSS Document */
+
+body {
+    margin:0px;
+    font-family:Oswald, Verdana;
+    }
+#main1, #main2, #navi1, #footer {
+    width:900px;
+    margin:0px auto 0px auto;
+    padding:0px;  
+    }
+
+#header {
+    text-align:center;
+    height:50px;
+    }
+/*-------------------TOP NAV ONLY-----------------------*/
+#navi1 {
+      height:50px;
+    }
+  li {
+      display:inline;
+      }
+  .nava,.actli {
+      display:block;
+      padding:0px 60px;
+      width:150px;
+      height:50px;
+      float:left;
+      text-align:center;
+      font-size:2em;
+      color:white;
+      text-decoration:none;
+      }
+  .actli {
+      text-decoration: underline;
+      } 
+  .nava:hover {
+      background-color:#333333;
+      }
+  #navbg {
+      background-color: black;
+      width:100%;
+      height:50px;
+  }
+/*----------------------------------------*/
+#content {
+    padding:20px 0px 0px;
+    margin-bottom:100px;
+    }
+#footer, #footerbg {
+    text-align:center;
+    height:50px;
+    position:fixed;
+    bottom:0px;
+    color:white;
+    background-color:black;
+    }
+#footerbg {
+    z-index:-1;
+    width:100%;
+    }
+
+      
